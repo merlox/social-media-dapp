@@ -20,8 +20,15 @@ class Main extends React.Component {
     }
 
     render() {
+        let contentBlock = this.state.content.map((element, index) => (
+            <div key={index} className="content">
+                <div className="content-address">{element.author}</div>
+                <div className="content-message">{element.message}</div>
+                <div>{element.hashtags.map((hashtag, i) => (<span key={i}>#{hashtag} </span>))}</div>
+            </div>
+        ))
         return (
-            <div>
+            <div className="main-container">
                 <div className="hashtag-block">
                     <h2>Most popular hashtags</h2>
                     <div className="hashtag-container"></div>
@@ -34,7 +41,7 @@ class Main extends React.Component {
                     </div>
 
                     <div className="content-container">
-
+                        {contentBlock}
                     </div>
                 </div>
             </div>
