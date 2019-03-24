@@ -57,6 +57,15 @@ button:hover {
     margin-bottom: 5px;
 }
 
+.content-hashtags {
+    margin-bottom: 5px;
+}
+
+.content-time {
+    color: grey;
+    font-size: 12pt;
+}
+
 .hashtag-block {
     text-align: center;
 }

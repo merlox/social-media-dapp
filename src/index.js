@@ -10,13 +10,16 @@ class Main extends React.Component {
             content: [{
                 author: '0x211824098yf7320417812j1002341342342341234',
                 message: 'This is a test',
-                hashtags: ['test', 'dapp', 'blockchain']
+                hashtags: ['test', 'dapp', 'blockchain'],
+                time: new Date().toLocaleDateString(),
             }, {
                 author: '0x211824098yf7320417812j1002341342342341234',
                 message: 'This is another test',
-                hashtags: ['sample', 'dapp', 'Ethereum']
+                hashtags: ['sample', 'dapp', 'Ethereum'],
+                time: new Date().toLocaleDateString(),
             }],
-            hashtags: ['dapp', 'Ethereum', 'blockchain', 'technology', 'design']
+            hashtags: ['dapp', 'Ethereum', 'blockchain', 'technology', 'design'],
+            followedHashtags: ['electronics', 'design', 'robots', 'futurology', 'manufacturing'],
         }
     }
 
@@ -25,7 +28,8 @@ class Main extends React.Component {
             <div key={index} className="content">
                 <div className="content-address">{element.author}</div>
                 <div className="content-message">{element.message}</div>
-                <div>{element.hashtags.map((hashtag, i) => (<span key={i}>#{hashtag} </span>))}</div>
+                <div className="content-hashtags">{element.hashtags.map((hashtag, i) => (<span key={i}>#{hashtag} </span>))}</div>
+                <div className="content-time">{element.time}</div>
             </div>
         ))
         let hashtagBlock = this.state.hashtags.map((element, index) => (
@@ -33,11 +37,18 @@ class Main extends React.Component {
                 <a className="hashtag" href="#">#{element}</a>
             </div>
         ))
+        let followedHashtags = this.state.followedHashtags.map((element, index) => (
+            <div key={index}>
+                <a className="hashtag" href="#">#{element}</a>
+            </div>
+        ))
         return (
             <div className="main-container">
                 <div className="hashtag-block">
-                    <h2>Most popular hashtags</h2>
+                    <h3>Most popular hashtags</h3>
                     <div className="hashtag-container">{hashtagBlock}</div>
+                    <h3>Followed hashtags</h3>
+                    <div className="hashtag-container">{followedHashtags}</div>
                 </div>
                 <div className="content-block">
                     <div className="input-container">
