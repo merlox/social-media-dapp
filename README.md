@@ -1,1 +1,2 @@
-Remember to npm install and webpack -w -d to see your changes.
+# social-media-dapp
+The social media dapp for tech enthusiasts
