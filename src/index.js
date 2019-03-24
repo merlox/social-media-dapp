@@ -15,7 +15,8 @@ class Main extends React.Component {
                 author: '0x211824098yf7320417812j1002341342342341234',
                 message: 'This is another test',
                 hashtags: ['sample', 'dapp', 'Ethereum']
-            }]
+            }],
+            hashtags: ['dapp', 'Ethereum', 'blockchain', 'technology', 'design']
         }
     }
 
@@ -27,17 +28,21 @@ class Main extends React.Component {
                 <div>{element.hashtags.map((hashtag, i) => (<span key={i}>#{hashtag} </span>))}</div>
             </div>
         ))
+        let hashtagBlock = this.state.hashtags.map((element, index) => (
+            <div key={index}>
+                <a className="hashtag" href="#">#{element}</a>
+            </div>
+        ))
         return (
             <div className="main-container">
                 <div className="hashtag-block">
                     <h2>Most popular hashtags</h2>
-                    <div className="hashtag-container"></div>
+                    <div className="hashtag-container">{hashtagBlock}</div>
                 </div>
                 <div className="content-block">
                     <div className="input-container">
-                        <input placeholder="Publish content..." type="text"/>
+                        <textarea placeholder="Publish content..."></textarea>
                         <button type="button">Publish</button>
-                        <button type="button">Cancel</button>
                     </div>
 
                     <div className="content-container">
