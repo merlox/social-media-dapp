@@ -18,7 +18,7 @@ class Main extends React.Component {
                 hashtags: ['sample', 'dapp', 'Ethereum'],
                 time: new Date().toLocaleDateString(),
             }],
-            hashtags: ['dapp', 'Ethereum', 'blockchain', 'technology', 'design'],
+            topHashtags: ['dapp', 'Ethereum', 'blockchain', 'technology', 'design'],
             followedHashtags: ['electronics', 'design', 'robots', 'futurology', 'manufacturing'],
             displaySubscribe: false,
             displaySubscribeId: '',
@@ -64,7 +64,7 @@ class Main extends React.Component {
                 <div className="content-time">{element.time}</div>
             </div>
         ))
-        let hashtagBlock = this.state.hashtags.map((hashtag, index) => (
+        let hashtagBlock = this.state.topHashtags.map((hashtag, index) => (
             <div key={index}>
                 {this.generateHashtags(hashtag, index)}
             </div>
@@ -77,7 +77,7 @@ class Main extends React.Component {
         return (
             <div className="main-container">
                 <div className="hashtag-block">
-                    <h3>Most popular hashtags</h3>
+                    <h3>Top hashtags</h3>
                     <div className="hashtag-container">{hashtagBlock}</div>
                     <h3>Followed hashtags</h3>
                     <div className="hashtag-container">{followedHashtags}</div>
