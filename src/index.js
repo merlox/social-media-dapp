@@ -20,7 +20,34 @@ class Main extends React.Component {
             }],
             hashtags: ['dapp', 'Ethereum', 'blockchain', 'technology', 'design'],
             followedHashtags: ['electronics', 'design', 'robots', 'futurology', 'manufacturing'],
+            displaySubscribe: false,
+            displaySubscribeId: '',
         }
+    }
+
+    generateHashtags(hashtag, index) {
+        let timeout
+        return (
+            <span onMouseEnter={() => {
+                clearTimeout(timeout)
+                this.setState({
+                    displaySubscribe: true,
+                    displaySubscribeId: `subscribe-${hashtag}-${index}`,
+                })
+            }} onMouseLeave={() => {
+                timeout = setTimeout(() => {
+                    this.setState({
+                        displaySubscribe: false,
+                        displaySubscribeId: '',
+                    })
+                }, 2e3)
+            }}>
+                <a className="hashtag" href="#">#{hashtag}</a>
+                <span className="spacer"></span>
+                <button ref={`subscribe-${hashtag}-${index}`} className={this.state.displaySubscribe && this.state.displaySubscribeId == `subscribe-${hashtag}-${index}` ? '' : 'hidden'} type="button">Subscribe</button>
+                <span className="spacer"></span>
+            </span>
+        )
     }
 
     render() {
@@ -28,18 +55,23 @@ class Main extends React.Component {
             <div key={index} className="content">
                 <div className="content-address">{element.author}</div>
                 <div className="content-message">{element.message}</div>
-                <div className="content-hashtags">{element.hashtags.map((hashtag, i) => (<span key={i}>#{hashtag} </span>))}</div>
+                <div className="content-hashtags">{element.hashtags.map((hashtag, i) => (
+                    <span key={i}>
+                        {this.generateHashtags(hashtag, index)}
+                    </span>
+                ))}
+                </div>
                 <div className="content-time">{element.time}</div>
             </div>
         ))
-        let hashtagBlock = this.state.hashtags.map((element, index) => (
+        let hashtagBlock = this.state.hashtags.map((hashtag, index) => (
             <div key={index}>
-                <a className="hashtag" href="#">#{element}</a>
+                {this.generateHashtags(hashtag, index)}
             </div>
         ))
-        let followedHashtags = this.state.followedHashtags.map((element, index) => (
+        let followedHashtags = this.state.followedHashtags.map((hashtag, index) => (
             <div key={index}>
-                <a className="hashtag" href="#">#{element}</a>
+                {this.generateHashtags(hashtag, index)}
             </div>
         ))
         return (
@@ -53,6 +85,7 @@ class Main extends React.Component {
                 <div className="content-block">
                     <div className="input-container">
                         <textarea placeholder="Publish content..."></textarea>
+                        <input type="text" placeholder="Hashtags separated by commas..."/>
                         <button type="button">Publish</button>
                     </div>
 
