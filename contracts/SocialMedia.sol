@@ -105,7 +105,7 @@ contract SocialMedia {
     /// @param _hashtag The hashtag from which get content
     /// @param _amount The quantity of contents to get for instance, 50 pieces of content for that hashtag
     /// @return uint256[] Returns the ids of the contents so that you can get each piece independently with a new request since you can't return arrays of strings
-    function getContentIdsByHashtag(uint256 _hashtag, uint256 _amount) public view returns(uint256[] memory) {
+    function getContentIdsByHashtag(bytes32 _hashtag, uint256 _amount) public view returns(uint256[] memory) {
         uint256[] memory ids = new uint256[](_amount);
         for(uint256 i = 0; i < _amount; i++) {
             ids[i] = contentByHashtag[_hashtag][i].id;
@@ -116,7 +116,7 @@ contract SocialMedia {
     /// @notice Returns the data for a particular content id
     /// @param _id The id of the content
     /// @return Returns the id, author, date, content and hashtags for that piece of content
-    function getContentById(uint256 _id) public view returns(uint256, address, uint256, string memory, bytes32) {
+    function getContentById(uint256 _id) public view returns(uint256, address, uint256, string memory, bytes32[] memory) {
         Content memory c = contentById[_id];
         return (c.id, c.author, c.date, c.content, c.hashtags);
     }
