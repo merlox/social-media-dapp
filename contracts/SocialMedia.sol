@@ -16,6 +16,7 @@ contract SocialMedia {
     mapping(bytes32 => uint256) public hashtagRanking;
     mapping(uint256 => bytes32) public topHashtags;
     mapping(address => bytes32) public subscribedHashtags;
+    mapping(bytes32 => uint256) public hashtagScore; // The number of times this hashtag has been used, used to sort the top hashtags
     mapping(bytes32 => Content[]) public contentByHashtag;
     mapping(uint256 => Content) public contentById;
     address[] public users;
@@ -31,9 +32,9 @@ contract SocialMedia {
     /// @param _hashtag The hashtag name
     function subscribeToHashtag(bytes32 _hashtag) public {}
 
-    /// @notice To unsuscribe to a hashtag
+    /// @notice To unsubscribe to a hashtag
     /// @param _hashtag The hashtag name
-    function unsuscribeToHashtag(bytes32 _hashtag) public {}
+    function unsubscribeToHashtag(bytes32 _hashtag) public {}
 
     /// @notice To get the top hashtags
     /// @param _amount How many top hashtags to get in order, for instance the top 20 hashtags
@@ -48,7 +49,7 @@ contract SocialMedia {
     /// @param _hashtag The hashtag from which get content
     /// @param _amount The quantity of contents to get for instance, 50 pieces of content for that hashtag
     /// @return uint256[] Returns the ids of the contents so that you can get each piece independently with a new request since you can't return arrays of strings
-    function getHashtagContent(uint256 _hashtag, uint256 _amount) public view returns(uint256[] memory) {}
+    function getContentIdsByHashtag(uint256 _hashtag, uint256 _amount) public view returns(uint256[] memory) {}
 
     /// @notice Returns the data for a particular content id
     /// @param _id The id of the content
