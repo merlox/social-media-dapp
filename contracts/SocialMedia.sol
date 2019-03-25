@@ -18,10 +18,10 @@ contract SocialMedia {
     mapping(bytes32 => Content[]) public contentByHashtag;
     mapping(uint256 => Content) public contentById;
     mapping(bytes32 => bool) public doesHashtagExist;
+    mapping(address => bool) public doesUserExist;
     address[] public users;
     Content[] public contents;
     bytes32[] public hashtags;
-    bytes32[] public topHashtags;
     uint256 public latestContentId;
 
     /// @notice To add new content to the social media dApp. If no hashtags are sent, the content is added to the #general hashtag list.
@@ -29,43 +29,59 @@ contract SocialMedia {
     /// @param _hashtags The hashtags used for that piece of content
     function addContent(string memory _content, bytes32[] memory _hashtags) public {
         require(bytes(_content).length > 0, 'The content cannot be empty');
-
         Content memory newContent = Content(latestContentId, msg.sender, now, _content, _hashtags);
         // If the user didn't specify any hashtags add the content to the #general hashtag
         if(_hashtags.length == 0) {
             contentByHashtag['general'].push(newContent);
             hashtagScore['general']++;
-            doesHashtagExist['general'] = true;
+            if(!doesHashtagExist['general']) {
+                hashtags.push('general');
+                doesHashtagExist['general'] = true;
+            }
         } else {
             for(uint256 i = 0; i < _hashtags.length; i++) {
                 contentByHashtag[_hashtags[i]].push(newContent);
                 hashtagScore[_hashtags[i]]++;
-                doesHashtagExist[_hashtags[i]] = true;
+                if(!doesHashtagExist[_hashtags[i]]) {
+                    hashtags.push(_hashtags[i]);
+                    doesHashtagExist[_hashtags[i]] = true;
+                }
             }
         }
-        updateHashtagRankings();
+        hashtags = sortHashtagsByScore();
         contentById[latestContentId] = newContent;
         contents.push(newContent);
-        users.push(msg.sender);
+        if(!doesUserExist[msg.sender]) {
+            users.push(msg.sender);
+            doesUserExist[msg.sender] = true;
+        }
         emit ContentAdded(latestContentId, msg.sender, now, _content, _hashtags);
         latestContentId++;
     }
 
-    /// @notice To subscribe to a hashtag
+    /// @notice To subscribe to a hashtag if you didn't do so already
     /// @param _hashtag The hashtag name
-    function subscribeToHashtag(bytes32 _hashtag) public {}
+    function subscribeToHashtag(bytes32 _hashtag) public {
+        if(!checkExistingSubscription(_hashtag)) {
+            subscribedHashtags[msg.sender].push(_hashtag);
+            hashtagScore[_hashtag]++;
+            hashtags = sortHashtagsByScore();
+        }
+    }
 
-    /// @notice To unsubscribe to a hashtag
+    /// @notice To unsubscribe to a hashtag if you are subscribed otherwise it won't do nothing
     /// @param _hashtag The hashtag name
-    function unsubscribeToHashtag(bytes32 _hashtag) public {}
-
-    /// @notice To update the top hashtag rankings
-    function updateHashtagRankings() public {
-        sortHashtagsByScore();
-
-        mapping(bytes32 => uint256) public hashtagRanking; // It returns the position in the ranking of a particular hashtag
-        mapping(uint256 => bytes32) public topHashtags; // This is defined by the hashtag score and it's updated everytime a user uses a hashtag or subscribes to one
-        mapping(bytes32 => uint256) public hashtagScore; // The number of times this hashtag has been used, used to sort the top hashtags
+    function unsubscribeToHashtag(bytes32 _hashtag) public {
+        if(checkExistingSubscription(_hashtag)) {
+            for(uint256 i = 0; i < subscribedHashtags[msg.sender].length; i++) {
+                if(subscribedHashtags[msg.sender][i] == _hashtag) {
+                    delete subscribedHashtags[msg.sender][i];
+                    hashtagScore[_hashtag]--;
+                    hashtags = sortHashtagsByScore();
+                    break;
+                }
+            }
+        }
     }
 
     /// @notice To get the top hashtags
@@ -88,10 +104,8 @@ contract SocialMedia {
     /// @return Returns the id, author, date, content and hashtags for that piece of content
     function getContentById(uint256 _id) public view returns(uint256, address, uint256, string memory, bytes32) {}
 
-
-    /// @notice Sorts the selected array of Orders by price from lower to higher if it's a buy order or from highest to lowest if it's a sell order
-    /// @param _type The type of order either 'sell' or 'buy'
-    /// @return uint256[] Returns the sorted ids
+    /// @notice Sorts the hashtags given their hashtag score
+    /// @return bytes32[] Returns the sorted array of hashtags
     function sortHashtagsByScore() public view returns(bytes32[] memory) {
         bytes32[] memory _hashtags = hashtags;
         bytes32[] memory sortedHashtags = new bytes32[](hashtags.length);
@@ -109,5 +123,14 @@ contract SocialMedia {
             lastId++;
         }
         return sortedHashtags;
+    }
+
+    /// @notice To check if the use is already subscribed to a hashtag
+    /// @return bool If you are subscribed to that hashtag or not
+    function checkExistingSubscription(bytes32 _hashtag) public view returns(bool) {
+        for(uint256 i = 0; i < subscribedHashtags[msg.sender].length; i++) {
+            if(subscribedHashtags[msg.sender][i] == _hashtag) return true;
+        }
+        return false;
     }
 }
