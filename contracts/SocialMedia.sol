@@ -13,14 +13,15 @@ contract SocialMedia {
 
     event ContentAdded(uint256 indexed id, address indexed author, uint256 indexed date, string content, bytes32[] hashtags);
 
-    mapping(bytes32 => uint256) public hashtagRanking; // It returns the position in the ranking of a particular hashtag
-    mapping(uint256 => bytes32) public topHashtags; // This is defined by the hashtag score and it's updated everytime a user uses a hashtag or subscribes to one
-    mapping(address => bytes32) public subscribedHashtags;
+    mapping(address => bytes32[]) public subscribedHashtags;
     mapping(bytes32 => uint256) public hashtagScore; // The number of times this hashtag has been used, used to sort the top hashtags
     mapping(bytes32 => Content[]) public contentByHashtag;
     mapping(uint256 => Content) public contentById;
+    mapping(bytes32 => bool) public doesHashtagExist;
     address[] public users;
     Content[] public contents;
+    bytes32[] public hashtags;
+    bytes32[] public topHashtags;
     uint256 public latestContentId;
 
     /// @notice To add new content to the social media dApp. If no hashtags are sent, the content is added to the #general hashtag list.
@@ -34,10 +35,12 @@ contract SocialMedia {
         if(_hashtags.length == 0) {
             contentByHashtag['general'].push(newContent);
             hashtagScore['general']++;
+            doesHashtagExist['general'] = true;
         } else {
             for(uint256 i = 0; i < _hashtags.length; i++) {
                 contentByHashtag[_hashtags[i]].push(newContent);
                 hashtagScore[_hashtags[i]]++;
+                doesHashtagExist[_hashtags[i]] = true;
             }
         }
         updateHashtagRankings();
@@ -58,7 +61,7 @@ contract SocialMedia {
 
     /// @notice To update the top hashtag rankings
     function updateHashtagRankings() public {
-
+        sortHashtagsByScore();
 
         mapping(bytes32 => uint256) public hashtagRanking; // It returns the position in the ranking of a particular hashtag
         mapping(uint256 => bytes32) public topHashtags; // This is defined by the hashtag score and it's updated everytime a user uses a hashtag or subscribes to one
@@ -84,4 +87,27 @@ contract SocialMedia {
     /// @param _id The id of the content
     /// @return Returns the id, author, date, content and hashtags for that piece of content
     function getContentById(uint256 _id) public view returns(uint256, address, uint256, string memory, bytes32) {}
+
+
+    /// @notice Sorts the selected array of Orders by price from lower to higher if it's a buy order or from highest to lowest if it's a sell order
+    /// @param _type The type of order either 'sell' or 'buy'
+    /// @return uint256[] Returns the sorted ids
+    function sortHashtagsByScore() public view returns(bytes32[] memory) {
+        bytes32[] memory _hashtags = hashtags;
+        bytes32[] memory sortedHashtags = new bytes32[](hashtags.length);
+        uint256 lastId = 0;
+        for(uint256 i = 0; i < _hashtags.length; i++) {
+            for(uint j = i+1; j < _hashtags.length; j++) {
+                // If it's a buy order, sort from lowest to highest since we want the lowest prices first
+                if(hashtagScore[_hashtags[i]] < hashtagScore[_hashtags[j]]) {
+                    bytes32 temporaryhashtag = _hashtags[i];
+                    _hashtags[i] = _hashtags[j];
+                    _hashtags[j] = temporaryhashtag;
+                }
+            }
+            sortedHashtags[lastId] = _hashtags[i];
+            lastId++;
+        }
+        return sortedHashtags;
+    }
 }
