@@ -11,22 +11,42 @@ contract SocialMedia {
         bytes32[] hashtags;
     }
 
-    event ContentAdded(address indexed author, uint256 indexed date, string indexed content, bytes32[] hashtags);
+    event ContentAdded(uint256 indexed id, address indexed author, uint256 indexed date, string content, bytes32[] hashtags);
 
-    mapping(bytes32 => uint256) public hashtagRanking;
-    mapping(uint256 => bytes32) public topHashtags;
+    mapping(bytes32 => uint256) public hashtagRanking; // It returns the position in the ranking of a particular hashtag
+    mapping(uint256 => bytes32) public topHashtags; // This is defined by the hashtag score and it's updated everytime a user uses a hashtag or subscribes to one
     mapping(address => bytes32) public subscribedHashtags;
     mapping(bytes32 => uint256) public hashtagScore; // The number of times this hashtag has been used, used to sort the top hashtags
     mapping(bytes32 => Content[]) public contentByHashtag;
     mapping(uint256 => Content) public contentById;
     address[] public users;
-    uint256[] public contents;
+    Content[] public contents;
     uint256 public latestContentId;
 
-    /// @notice To add new content to the social media dApp
+    /// @notice To add new content to the social media dApp. If no hashtags are sent, the content is added to the #general hashtag list.
     /// @param _content The string of content
     /// @param _hashtags The hashtags used for that piece of content
-    function addContent(string memory _content, bytes32[] memory _hashtags) public {}
+    function addContent(string memory _content, bytes32[] memory _hashtags) public {
+        require(bytes(_content).length > 0, 'The content cannot be empty');
+
+        Content memory newContent = Content(latestContentId, msg.sender, now, _content, _hashtags);
+        // If the user didn't specify any hashtags add the content to the #general hashtag
+        if(_hashtags.length == 0) {
+            contentByHashtag['general'].push(newContent);
+            hashtagScore['general']++;
+        } else {
+            for(uint256 i = 0; i < _hashtags.length; i++) {
+                contentByHashtag[_hashtags[i]].push(newContent);
+                hashtagScore[_hashtags[i]]++;
+            }
+        }
+        updateHashtagRankings();
+        contentById[latestContentId] = newContent;
+        contents.push(newContent);
+        users.push(msg.sender);
+        emit ContentAdded(latestContentId, msg.sender, now, _content, _hashtags);
+        latestContentId++;
+    }
 
     /// @notice To subscribe to a hashtag
     /// @param _hashtag The hashtag name
@@ -35,6 +55,11 @@ contract SocialMedia {
     /// @notice To unsubscribe to a hashtag
     /// @param _hashtag The hashtag name
     function unsubscribeToHashtag(bytes32 _hashtag) public {}
+
+    /// @notice To update the top hashtag rankings
+    function updateHashtagRankings() public {
+
+    }
 
     /// @notice To get the top hashtags
     /// @param _amount How many top hashtags to get in order, for instance the top 20 hashtags
