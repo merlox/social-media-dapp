@@ -87,22 +87,39 @@ contract SocialMedia {
     /// @notice To get the top hashtags
     /// @param _amount How many top hashtags to get in order, for instance the top 20 hashtags
     /// @return bytes32[] Returns the names of the hashtags
-    function getTopHashtags(uint256 _amount) public view returns(bytes32[] memory) {}
+    function getTopHashtags(uint256 _amount) public view returns(bytes32[] memory) {
+        bytes32[] memory result = new bytes32[](_amount);
+        for(uint256 i = 0; i < _amount; i++) {
+            result[i] = hashtags[i];
+        }
+        return result;
+    }
 
     /// @notice To get the followed hashtag names for this msg.sender
     /// @return bytes32[] The hashtags followed by this user
-    function getFollowedHashtags() public view returns(bytes32[] memory) {}
+    function getFollowedHashtags() public view returns(bytes32[] memory) {
+        return subscribedHashtags[msg.sender];
+    }
 
-    /// @notice To get the top hashtags
+    /// @notice To get the contents for a particular hashtag. It returns the ids because we can't return arrays of strings and we can't return structs so the user has to manually make a new request for each piece of content using the function below.
     /// @param _hashtag The hashtag from which get content
     /// @param _amount The quantity of contents to get for instance, 50 pieces of content for that hashtag
     /// @return uint256[] Returns the ids of the contents so that you can get each piece independently with a new request since you can't return arrays of strings
-    function getContentIdsByHashtag(uint256 _hashtag, uint256 _amount) public view returns(uint256[] memory) {}
+    function getContentIdsByHashtag(uint256 _hashtag, uint256 _amount) public view returns(uint256[] memory) {
+        uint256[] memory ids = new uint256[](_amount);
+        for(uint256 i = 0; i < _amount; i++) {
+            ids[i] = contentByHashtag[_hashtag][i].id;
+        }
+        return ids;
+    }
 
     /// @notice Returns the data for a particular content id
     /// @param _id The id of the content
     /// @return Returns the id, author, date, content and hashtags for that piece of content
-    function getContentById(uint256 _id) public view returns(uint256, address, uint256, string memory, bytes32) {}
+    function getContentById(uint256 _id) public view returns(uint256, address, uint256, string memory, bytes32) {
+        Content memory c = contentById[_id];
+        return (c.id, c.author, c.date, c.content, c.hashtags);
+    }
 
     /// @notice Sorts the hashtags given their hashtag score
     /// @return bytes32[] Returns the sorted array of hashtags
