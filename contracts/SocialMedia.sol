@@ -59,6 +59,10 @@ contract SocialMedia {
     /// @notice To update the top hashtag rankings
     function updateHashtagRankings() public {
 
+
+        mapping(bytes32 => uint256) public hashtagRanking; // It returns the position in the ranking of a particular hashtag
+        mapping(uint256 => bytes32) public topHashtags; // This is defined by the hashtag score and it's updated everytime a user uses a hashtag or subscribes to one
+        mapping(bytes32 => uint256) public hashtagScore; // The number of times this hashtag has been used, used to sort the top hashtags
     }
 
     /// @notice To get the top hashtags
