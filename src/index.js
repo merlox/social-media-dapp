@@ -37,8 +37,9 @@ class Main extends React.Component {
         this.getContent()
     }
 
-    generateHashtags(hashtag, index) {
+    async generateHashtags(hashtag, index) {
         let timeout
+        const isSubscribed = await this.state.contract.checkExistingSubscription(hashtag).call()
         return (
             <span onMouseEnter={() => {
                 clearTimeout(timeout)
@@ -56,7 +57,10 @@ class Main extends React.Component {
             }}>
                 <a className="hashtag" href="#">#{hashtag}</a>
                 <span className="spacer"></span>
-                <button ref={`subscribe-${hashtag}-${index}`} className={this.state.displaySubscribe && this.state.displaySubscribeId == `subscribe-${hashtag}-${index}` ? '' : 'hidden'} type="button">Subscribe</button>
+                <button onClick={() => {
+                    if(isSubscribed) this.unsubscribe(hashtag)
+                    else this.subscribe(hashtag)
+                }} ref={`subscribe-${hashtag}-${index}`} className={this.state.displaySubscribe && this.state.displaySubscribeId == `subscribe-${hashtag}-${index}` ? '' : 'hidden'} type="button">{isSubscribed ? 'Unsubscribe' : 'Subscribe'}</button>
                 <span className="spacer"></span>
             </span>
         )
@@ -86,6 +90,7 @@ class Main extends React.Component {
             })
         } catch (e) {console.log('Error', e)}
         await this.updateTopHashtags()
+        await this.getContent()
     }
 
     async getContent() {
@@ -109,6 +114,14 @@ class Main extends React.Component {
             contents.push(content)
         }
         this.setState({contents})
+    }
+
+    async subscribe(hashtag) {
+        await this.state.contract.subscribeToHashtag(hashtag).send({from: this.state.user})
+    }
+
+    async unsubscribe(hashtag) {
+        await this.state.contract.unsubscribeToHashtag(hashtag).send({from: this.state.user})
     }
 
     render() {
