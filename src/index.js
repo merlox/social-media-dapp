@@ -42,9 +42,13 @@ class Main extends React.Component {
         window.contract = new web3js.eth.Contract(ABI.abi, ABI.networks['3'].address, {
             from: user
         })
+        await this.setState({contract, user})
+        this.updateTopHashtags()
+    }
+
+    async updateTopHashtags() {
         const topHashtags = (await contract.methods.getTopHashtags(10).call()).map(element => web3js.utils.toUtf8(element))
-        console.log(topHashtags)
-        await this.setState({contract, user, topHashtags})
+        await this.setState({topHashtags})
     }
 
     generateHashtags(hashtag, index) {
@@ -72,6 +76,27 @@ class Main extends React.Component {
         )
     }
 
+    bytes32(name) {
+        let nameHex = web3js.utils.toHex(name)
+        for(let i = nameHex.length; i < 66; i++) {
+            nameHex = nameHex + '0'
+        }
+        return nameHex
+    }
+
+    async publishContent(message, hashtags) {
+        if(message.length == 0) alert('You must write a message')
+        hashtags = hashtags.trim().replace(/#*/g, '').replace(/,+/g, ',').split(',').map(element => this.bytes32(element.trim()))
+        message = this.bytes32(message)
+        try {
+            await this.state.contract.methods.addContent(message, hashtags).send({
+                from: this.state.user,
+                gas: 8e6
+            })
+        } catch (e) {console.log('Error', e)}
+        await this.updateTopHashtags()
+    }
+
     render() {
         let contentBlock = this.state.content.map((element, index) => (
             <div key={index} className="content">
@@ -86,11 +111,16 @@ class Main extends React.Component {
                 <div className="content-time">{element.time}</div>
             </div>
         ))
-        let hashtagBlock = this.state.topHashtags.map((hashtag, index) => (
-            <div key={index}>
-                {this.generateHashtags(hashtag, index)}
-            </div>
-        ))
+        let topHashtagBlock
+        if(this.state.topHashtags.length == 0) {
+            topHashtagBlock = 'There are no hashtags yet, come back later!'
+        } else {
+            topHashtagBlock = this.state.topHashtags.map((hashtag, index) => (
+                <div key={index}>
+                    {this.generateHashtags(hashtag, index)}
+                </div>
+            ))
+        }
         let followedHashtags = this.state.followedHashtags.map((hashtag, index) => (
             <div key={index}>
                 {this.generateHashtags(hashtag, index)}
@@ -100,15 +130,17 @@ class Main extends React.Component {
             <div className="main-container">
                 <div className="hashtag-block">
                     <h3>Top hashtags</h3>
-                    <div className="hashtag-container">{hashtagBlock}</div>
+                    <div className="hashtag-container">{topHashtagBlock}</div>
                     <h3>Followed hashtags</h3>
                     <div className="hashtag-container">{followedHashtags}</div>
                 </div>
                 <div className="content-block">
                     <div className="input-container">
-                        <textarea placeholder="Publish content..."></textarea>
-                        <input type="text" placeholder="Hashtags separated by commas..."/>
-                        <button type="button">Publish</button>
+                        <textarea ref="content" placeholder="Publish content..."></textarea>
+                        <input ref="hashtags" type="text" placeholder="Hashtags separated by commas without the # sign..."/>
+                        <button onClick={() => {
+                            this.publishContent(this.refs.content.value, this.refs.hashtags.value)
+                        }} type="button">Publish</button>
                     </div>
 
                     <div className="content-container">

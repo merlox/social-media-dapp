@@ -38,6 +38,7 @@ contract SocialMedia {
                 hashtags.push('general');
                 doesHashtagExist['general'] = true;
             }
+            newContent.hashtags.push('general')
         } else {
             for(uint256 i = 0; i < _hashtags.length; i++) {
                 contentByHashtag[_hashtags[i]].push(newContent);
