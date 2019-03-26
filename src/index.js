@@ -9,17 +9,7 @@ class Main extends React.Component {
         super()
 
         this.state = {
-            content: [{
-                author: '0x211824098yf7320417812j1002341342342341234',
-                message: 'This is a test',
-                hashtags: ['test', 'dapp', 'blockchain'],
-                time: new Date().toLocaleDateString(),
-            }, {
-                author: '0x211824098yf7320417812j1002341342342341234',
-                message: 'This is another test',
-                hashtags: ['sample', 'dapp', 'Ethereum'],
-                time: new Date().toLocaleDateString(),
-            }],
+            contents: [],
             topHashtags: ['dapp', 'Ethereum', 'blockchain', 'technology', 'design'],
             followedHashtags: ['electronics', 'design', 'robots', 'futurology', 'manufacturing'],
             displaySubscribe: false,
@@ -102,24 +92,27 @@ class Main extends React.Component {
         const latestContentId = await this.state.contract.methods.latestContentId().call()
         const amount = 10
         let contents = []
-        console.log(latestContentId)
+        let counter = amount
         // If we don't have enough content yet, show whats in there
-        if(latestContentId < amount) {
-            for(let i = 0; i < latestContentId; i++) {
-                const content = await this.state.contract.methods.getContentById(i).call()
-                contents.push(content)
+        if(latestContentId < amount) counter = latestContentId
+        for(let i = 0; i < counter; i++) {
+            let content = await this.state.contract.methods.getContentById(i).call()
+            content = {
+                id: content[0],
+                author: content[1],
+                time: new Date(parseInt(content[2] + '000')).toLocaleDateString(),
+                message: content[3],
+                hashtags: content[4],
             }
-        } else {
-            for(let i = 0; i < amount; i++) {
-                const content = await this.state.contract.methods.getContentById(latestContentId - i).call()
-                contents.push(content)
-            }
+            content.message = web3js.utils.toUtf8(content.message)
+            content.hashtags = content.hashtags.map(hashtag => web3js.utils.toUtf8(hashtag))
+            contents.push(content)
         }
-        console.log('Contents', contents)
+        this.setState({contents})
     }
 
     render() {
-        let contentBlock = this.state.content.map((element, index) => (
+        let contentBlock = this.state.contents.map((element, index) => (
             <div key={index} className="content">
                 <div className="content-address">{element.author}</div>
                 <div className="content-message">{element.message}</div>
