@@ -1,6 +1,6 @@
 // This is a social media smart contract that allows people to publish strings of text in short formats with a focus on hashtags so that they can follow, read and be in touch with the latest content regarding those hashtags. There will be a mapping os top hashtags. A struct for each piece of content with the date, author, content and array of hashtags. We want to avoid focusing on specific users that's why user accounts will be anonymous where addresses will the be the only identifiers.
 
-pragma solidity ^0.5.5;
+pragma solidity ^0.5.0;
 
 contract SocialMedia {
     struct Content {
