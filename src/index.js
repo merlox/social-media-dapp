@@ -1,6 +1,7 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
 import Web3Js from 'web3'
+import ABI from '../build/contracts/SocialMedia.json'
 import './index.css'
 
 class Main extends React.Component {
@@ -23,9 +24,11 @@ class Main extends React.Component {
             followedHashtags: ['electronics', 'design', 'robots', 'futurology', 'manufacturing'],
             displaySubscribe: false,
             displaySubscribeId: '',
+            user: '',
+            contract: '',
         }
 
-        setup()
+        this.setup()
     }
 
     async setup() {
@@ -35,6 +38,11 @@ class Main extends React.Component {
         } catch (error) {
             alert('You must approve this dApp to interact with it, reload it to approve it')
         }
+        const user = (await web3js.eth.getAccounts())[0]
+        const contract = new web3js.eth.Contract(ABI.abi, ABI.networks['3'].address, {
+            from: user
+        })
+        await this.setState({contract, user})
     }
 
     generateHashtags(hashtag, index) {
