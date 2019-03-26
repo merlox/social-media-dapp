@@ -44,11 +44,7 @@ class Main extends React.Component {
         })
         await this.setState({contract, user})
         this.updateTopHashtags()
-    }
-
-    async updateTopHashtags() {
-        const topHashtags = (await contract.methods.getTopHashtags(10).call()).map(element => web3js.utils.toUtf8(element))
-        await this.setState({topHashtags})
+        this.getContent()
     }
 
     generateHashtags(hashtag, index) {
@@ -76,6 +72,11 @@ class Main extends React.Component {
         )
     }
 
+    async updateTopHashtags() {
+        const topHashtags = (await contract.methods.getTopHashtags(10).call()).map(element => web3js.utils.toUtf8(element))
+        await this.setState({topHashtags})
+    }
+
     bytes32(name) {
         let nameHex = web3js.utils.toHex(name)
         for(let i = nameHex.length; i < 66; i++) {
@@ -95,6 +96,26 @@ class Main extends React.Component {
             })
         } catch (e) {console.log('Error', e)}
         await this.updateTopHashtags()
+    }
+
+    async getContent() {
+        const latestContentId = await this.state.contract.methods.latestContentId().call()
+        const amount = 10
+        let contents = []
+        console.log(latestContentId)
+        // If we don't have enough content yet, show whats in there
+        if(latestContentId < amount) {
+            for(let i = 0; i < latestContentId; i++) {
+                const content = await this.state.contract.methods.getContentById(i).call()
+                contents.push(content)
+            }
+        } else {
+            for(let i = 0; i < amount; i++) {
+                const content = await this.state.contract.methods.getContentById(latestContentId - i).call()
+                contents.push(content)
+            }
+        }
+        console.log('Contents', contents)
     }
 
     render() {
