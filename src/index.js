@@ -1,5 +1,6 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
+import Web3Js from 'web3'
 import './index.css'
 
 class Main extends React.Component {
@@ -22,6 +23,17 @@ class Main extends React.Component {
             followedHashtags: ['electronics', 'design', 'robots', 'futurology', 'manufacturing'],
             displaySubscribe: false,
             displaySubscribeId: '',
+        }
+
+        setup()
+    }
+
+    async setup() {
+        window.web3js = new Web3Js(ethereum)
+        try {
+            await ethereum.enable();
+        } catch (error) {
+            alert('You must approve this dApp to interact with it, reload it to approve it')
         }
     }
 
