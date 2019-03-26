@@ -39,10 +39,12 @@ class Main extends React.Component {
             alert('You must approve this dApp to interact with it, reload it to approve it')
         }
         const user = (await web3js.eth.getAccounts())[0]
-        const contract = new web3js.eth.Contract(ABI.abi, ABI.networks['3'].address, {
+        window.contract = new web3js.eth.Contract(ABI.abi, ABI.networks['3'].address, {
             from: user
         })
-        await this.setState({contract, user})
+        const topHashtags = (await contract.methods.getTopHashtags(10).call()).map(element => web3js.utils.toUtf8(element))
+        console.log(topHashtags)
+        await this.setState({contract, user, topHashtags})
     }
 
     generateHashtags(hashtag, index) {

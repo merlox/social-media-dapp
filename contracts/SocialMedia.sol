@@ -88,9 +88,17 @@ contract SocialMedia {
     /// @param _amount How many top hashtags to get in order, for instance the top 20 hashtags
     /// @return bytes32[] Returns the names of the hashtags
     function getTopHashtags(uint256 _amount) public view returns(bytes32[] memory) {
-        bytes32[] memory result = new bytes32[](_amount);
-        for(uint256 i = 0; i < _amount; i++) {
-            result[i] = hashtags[i];
+        bytes32[] memory result;
+        if(hashtags.length < _amount) {
+            result = new bytes32[](hashtags.length);
+            for(uint256 i = 0; i < hashtags.length; i++) {
+                result[i] = hashtags[i];
+            }
+        } else {
+            result = new bytes32[](_amount);
+            for(uint256 i = 0; i < _amount; i++) {
+                result[i] = hashtags[i];
+            }
         }
         return result;
     }
