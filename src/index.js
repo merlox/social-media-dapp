@@ -9,9 +9,9 @@ class Main extends React.Component {
         super()
 
         this.state = {
-            contentsBlock: [],
-            topHashtagsBlock: [],
-            followedHashtagsBlock: [],
+            contentsBlock: 'Loading please wait...',
+            topHashtagsBlock: 'Loading please wait...',
+            followedHashtagsBlock: 'Loading please wait...',
             displaySubscribe: false,
             displaySubscribeId: '',
             user: '',
@@ -61,6 +61,7 @@ class Main extends React.Component {
 
     async getHashtags() {
         let topHashtagBlock
+        let followedHashtagsBlock
         const amount = 10
         const topHashtags = (await contract.methods.getTopHashtags(amount).call()).map(element => web3js.utils.toUtf8(element))
         const followedHashtags = (await this.state.contract.methods.getFollowedHashtags().call()).map(element => web3js.utils.toUtf8(element))
@@ -78,16 +79,20 @@ class Main extends React.Component {
                 </div>
             ))
         }
-        let followedHashtagsBlock = followedHashtags.map((hashtag, index) => (
-            <div key={index}>
-                <Hashtag
-                    hashtag={hashtag}
-                    contract={this.state.contract}
-                    subscribe={hashtag => this.subscribe(hashtag)}
-                    unsubscribe={hashtag => this.unsubscribe(hashtag)}
-                />
-            </div>
-        ))
+        if(followedHashtags.length == 0) {
+            followedHashtagsBlock = "You're not following any hashtags yet"
+        } else {
+            followedHashtagsBlock = followedHashtags.map((hashtag, index) => (
+                <div key={index}>
+                    <Hashtag
+                        hashtag={hashtag}
+                        contract={this.state.contract}
+                        subscribe={hashtag => this.subscribe(hashtag)}
+                        unsubscribe={hashtag => this.unsubscribe(hashtag)}
+                    />
+                </div>
+            ))
+        }
         this.setState({topHashtagBlock, followedHashtagsBlock})
     }
 
