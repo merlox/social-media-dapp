@@ -9,9 +9,6 @@ class Main extends React.Component {
         super()
 
         this.state = {
-            contents: [],
-            topHashtags: [],
-            followedHashtags: [],
             contentsBlock: [],
             topHashtagsBlock: [],
             followedHashtagsBlock: [],
@@ -44,14 +41,8 @@ class Main extends React.Component {
             from: user
         })
         await this.setState({contract, user})
-        await this.updateTopHashtags()
         await this.getHashtags()
         await this.getContent()
-    }
-
-    async updateTopHashtags() {
-        const topHashtags = (await contract.methods.getTopHashtags(10).call()).map(element => web3js.utils.toUtf8(element))
-        await this.setState({topHashtags})
     }
 
     async publishContent(message, hashtags) {
@@ -64,24 +55,37 @@ class Main extends React.Component {
                 gas: 8e6
             })
         } catch (e) {console.log('Error', e)}
-        await this.updateTopHashtags()
+        await this.getHashtags()
         await this.getContent()
     }
 
     async getHashtags() {
         let topHashtagBlock
-        if(this.state.topHashtags.length == 0) {
+        const amount = 10
+        const topHashtags = (await contract.methods.getTopHashtags(amount).call()).map(element => web3js.utils.toUtf8(element))
+        const followedHashtags = (await this.state.contract.methods.getFollowedHashtags().call()).map(element => web3js.utils.toUtf8(element))
+        if(topHashtags.length == 0) {
             topHashtagBlock = 'There are no hashtags yet, come back later!'
         } else {
-            topHashtagBlock = this.state.topHashtags.map((hashtag, index) => (
+            topHashtagBlock = topHashtags.map((hashtag, index) => (
                 <div key={index}>
-                    <Hashtag hashtag={hashtag} contract={this.state.contract} />
+                    <Hashtag
+                        hashtag={hashtag}
+                        contract={this.state.contract}
+                        subscribe={hashtag => this.subscribe(hashtag)}
+                        unsubscribe={hashtag => this.unsubscribe(hashtag)}
+                    />
                 </div>
             ))
         }
-        let followedHashtagsBlock = this.state.followedHashtags.map((hashtag, index) => (
+        let followedHashtagsBlock = followedHashtags.map((hashtag, index) => (
             <div key={index}>
-                <Hashtag hashtag={hashtag} contract={this.state.contract} />
+                <Hashtag
+                    hashtag={hashtag}
+                    contract={this.state.contract}
+                    subscribe={hashtag => this.subscribe(hashtag)}
+                    unsubscribe={hashtag => this.unsubscribe(hashtag)}
+                />
             </div>
         ))
         this.setState({topHashtagBlock, followedHashtagsBlock})
@@ -114,7 +118,12 @@ class Main extends React.Component {
                 <div className="content-message">{element.message}</div>
                 <div className="content-hashtags">{element.hashtags.map((hashtag, i) => (
                     <span key={i}>
-                        <Hashtag hashtag={hashtag} contract={this.state.contract} />
+                        <Hashtag
+                            hashtag={hashtag}
+                            contract={this.state.contract}
+                            subscribe={hashtag => this.subscribe(hashtag)}
+                            unsubscribe={hashtag => this.unsubscribe(hashtag)}
+                        />
                     </span>
                 ))}
                 </div>
@@ -122,15 +131,23 @@ class Main extends React.Component {
             </div>
         )))
 
-        this.setState({contents, contentsBlock})
+        this.setState({contentsBlock})
     }
 
     async subscribe(hashtag) {
-        await this.state.contract.subscribeToHashtag(hashtag).send({from: this.state.user})
+        try {
+            await this.state.contract.methods.subscribeToHashtag(this.bytes32(hashtag)).send({from: this.state.user})
+        } catch(e) { console.log(e) }
+        await this.getHashtags()
+        await this.getContent()
     }
 
     async unsubscribe(hashtag) {
-        await this.state.contract.unsubscribeToHashtag(hashtag).send({from: this.state.user})
+        try {
+            await this.state.contract.methods.unsubscribeToHashtag(this.bytes32(hashtag)).send({from: this.state.user})
+        } catch(e) { console.log(e) }
+        await this.getHashtags()
+        await this.getContent()
     }
 
     render() {
@@ -166,6 +183,7 @@ class Hashtag extends React.Component {
         this.state = {
             displaySubscribe: false,
             displayUnsubscribe: false,
+            checkSubscription: false,
             isSubscribed: false,
         }
     }
@@ -190,7 +208,7 @@ class Hashtag extends React.Component {
     render() {
         return (
             <span onMouseEnter={async () => {
-                await this.checkExistingSubscription()
+                if(this.state.checkSubscription) await this.checkExistingSubscription()
                 if(!this.state.isSubscribed) {
                     this.setState({
                         displaySubscribe: true,
@@ -212,9 +230,11 @@ class Hashtag extends React.Component {
                 <span className="spacer"></span>
                 <button onClick={() => {
                     this.props.subscribe(this.props.hashtag)
+                    this.setState({checkSubscription: true})
                 }} className={this.state.displaySubscribe ? '' : 'hidden'} type="button">Subscribe</button>
                 <button onClick={() => {
                     this.props.unsubscribe(this.props.hashtag)
+                    this.setState({checkSubscription: true})
                 }} className={this.state.displayUnsubscribe ? '' : 'hidden'} type="button">Unsubscribe</button>
                 <span className="spacer"></span>
             </span>

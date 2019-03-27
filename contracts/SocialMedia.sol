@@ -38,7 +38,7 @@ contract SocialMedia {
                 hashtags.push('general');
                 doesHashtagExist['general'] = true;
             }
-            newContent.hashtags.push('general')
+            newContent.hashtags[0] = 'general';
         } else {
             for(uint256 i = 0; i < _hashtags.length; i++) {
                 contentByHashtag[_hashtags[i]].push(newContent);
@@ -76,7 +76,9 @@ contract SocialMedia {
         if(checkExistingSubscription(_hashtag)) {
             for(uint256 i = 0; i < subscribedHashtags[msg.sender].length; i++) {
                 if(subscribedHashtags[msg.sender][i] == _hashtag) {
-                    delete subscribedHashtags[msg.sender][i];
+                    bytes32 lastElement = subscribedHashtags[msg.sender][subscribedHashtags[msg.sender].length - 1];
+                    subscribedHashtags[msg.sender][i] = lastElement;
+                    subscribedHashtags[msg.sender].length--; // Reduce the array to remove empty elements
                     hashtagScore[_hashtag]--;
                     hashtags = sortHashtagsByScore();
                     break;
