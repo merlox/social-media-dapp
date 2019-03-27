@@ -9,6 +9,7 @@ class Main extends React.Component {
         super()
 
         this.state = {
+            followedHashtags: [],
             contentsBlock: 'Loading please wait...',
             topHashtagsBlock: 'Loading please wait...',
             followedHashtagsBlock: 'Loading please wait...',
@@ -93,14 +94,38 @@ class Main extends React.Component {
                 </div>
             ))
         }
-        this.setState({topHashtagBlock, followedHashtagsBlock})
+        this.setState({topHashtagBlock, followedHashtagsBlock, followedHashtags})
     }
 
     async getContent() {
         const latestContentId = await this.state.contract.methods.latestContentId().call()
         const amount = 10
+        const amountPerHashtag = 3
         let contents = []
         let counter = amount
+        // If we have subscriptions, get content for those subscriptions
+        if(this.state.followedHashtags.length > 0) {
+            for(let i = 0; i < this.state.followedHashtags.length; i++) {
+                // Get 3 contents per hashtag
+                let contentIds = await this.state.contract.methods.getContentIdsByHashtag(this.bytes32(this.state.followedHashtags[i]), 3).call()
+                let counterTwo = amountPerHashtag
+                if(contentIds < amountPerHashtag) counterTwo = contentIds
+                for(let a = counterTwo - 1; a >= 0; a--) {
+                    let content = await this.state.contract.methods.getContentById(i).call()
+                    content = {
+                        id: content[0],
+                        author: content[1],
+                        time: new Date(parseInt(content[2] + '000')).toLocaleDateString(),
+                        message: content[3],
+                        hashtags: content[4],
+                    }
+                    content.message = web3js.utils.toUtf8(content.message)
+                    content.hashtags = content.hashtags.map(hashtag => web3js.utils.toUtf8(hashtag))
+                    contents.push(content)
+                }
+            }
+        }
+
         // If we don't have enough content yet, show whats in there
         if(latestContentId < amount) counter = latestContentId
         for(let i = counter - 1; i >= 0; i--) {
