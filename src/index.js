@@ -24,6 +24,14 @@ class Main extends React.Component {
         this.setup()
     }
 
+    bytes32(name) {
+        let nameHex = web3js.utils.toHex(name)
+        for(let i = nameHex.length; i < 66; i++) {
+            nameHex = nameHex + '0'
+        }
+        return nameHex
+    }
+
     async setup() {
         window.web3js = new Web3Js(ethereum)
         try {
@@ -44,14 +52,6 @@ class Main extends React.Component {
     async updateTopHashtags() {
         const topHashtags = (await contract.methods.getTopHashtags(10).call()).map(element => web3js.utils.toUtf8(element))
         await this.setState({topHashtags})
-    }
-
-    bytes32(name) {
-        let nameHex = web3js.utils.toHex(name)
-        for(let i = nameHex.length; i < 66; i++) {
-            nameHex = nameHex + '0'
-        }
-        return nameHex
     }
 
     async publishContent(message, hashtags) {
@@ -75,13 +75,13 @@ class Main extends React.Component {
         } else {
             topHashtagBlock = this.state.topHashtags.map((hashtag, index) => (
                 <div key={index}>
-                    <Hashtag hashtag={hashtag} />
+                    <Hashtag hashtag={hashtag} contract={this.state.contract} />
                 </div>
             ))
         }
         let followedHashtagsBlock = this.state.followedHashtags.map((hashtag, index) => (
             <div key={index}>
-                <Hashtag hashtag={hashtag} />
+                <Hashtag hashtag={hashtag} contract={this.state.contract} />
             </div>
         ))
         this.setState({topHashtagBlock, followedHashtagsBlock})
@@ -114,7 +114,7 @@ class Main extends React.Component {
                 <div className="content-message">{element.message}</div>
                 <div className="content-hashtags">{element.hashtags.map((hashtag, i) => (
                     <span key={i}>
-                        <Hashtag hashtag={hashtag} />
+                        <Hashtag hashtag={hashtag} contract={this.state.contract} />
                     </span>
                 ))}
                 </div>
@@ -161,32 +161,61 @@ class Main extends React.Component {
 }
 
 class Hashtag extends React.Component {
-    constructor() {
+    constructor(props) {
         super()
         this.state = {
             displaySubscribe: false,
             displayUnsubscribe: false,
+            isSubscribed: false,
         }
     }
+
+    componentDidMount() {
+        this.checkExistingSubscription()
+    }
+
+    bytes32(name) {
+        let nameHex = web3js.utils.toHex(name)
+        for(let i = nameHex.length; i < 66; i++) {
+            nameHex = nameHex + '0'
+        }
+        return nameHex
+    }
+
+    async checkExistingSubscription() {
+        const isSubscribed = await this.props.contract.methods.checkExistingSubscription(this.bytes32(this.props.hashtag)).call()
+        this.setState({isSubscribed})
+    }
+
     render() {
         return (
-            <span onMouseEnter={() => {
-                this.setState({
-                    displaySubscribe: true,
-                })
+            <span onMouseEnter={async () => {
+                await this.checkExistingSubscription()
+                if(!this.state.isSubscribed) {
+                    this.setState({
+                        displaySubscribe: true,
+                        displayUnsubscribe: false,
+                    })
+                } else {
+                    this.setState({
+                        displaySubscribe: false,
+                        displayUnsubscribe: true,
+                    })
+                }
             }} onMouseLeave={() => {
                 this.setState({
                     displaySubscribe: false,
+                    displayUnsubscribe: false,
                 })
             }}>
                 <a className="hashtag" href="#">#{this.props.hashtag}</a>
                 <span className="spacer"></span>
                 <button onClick={() => {
                     this.props.subscribe(this.props.hashtag)
-                }} ref="d" className={this.state.displaySubscribe ? '' : 'hidden'} type="button">Subscribe</button>
+                }} className={this.state.displaySubscribe ? '' : 'hidden'} type="button">Subscribe</button>
                 <button onClick={() => {
                     this.props.unsubscribe(this.props.hashtag)
-                }} ref="d" className={this.state.displayUnsubscribe ? '' : 'hidden'} type="button">Unsubscribe</button>
+                }} className={this.state.displayUnsubscribe ? '' : 'hidden'} type="button">Unsubscribe</button>
                 <span className="spacer"></span>
             </span>
         )
