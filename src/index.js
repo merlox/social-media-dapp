@@ -10,8 +10,11 @@ class Main extends React.Component {
 
         this.state = {
             contents: [],
-            topHashtags: ['dapp', 'Ethereum', 'blockchain', 'technology', 'design'],
-            followedHashtags: ['electronics', 'design', 'robots', 'futurology', 'manufacturing'],
+            topHashtags: [],
+            followedHashtags: [],
+            contentsBlock: [],
+            topHashtagsBlock: [],
+            followedHashtagsBlock: [],
             displaySubscribe: false,
             displaySubscribeId: '',
             user: '',
@@ -33,38 +36,9 @@ class Main extends React.Component {
             from: user
         })
         await this.setState({contract, user})
-        this.updateTopHashtags()
-        this.getContent()
-    }
-
-    generateHashtags(hashtag, index) {
-        let timeout
-        // const isSubscribed = await this.state.contract.methods.checkExistingSubscription(hashtag).call()
-        // console.log('Is subscribed?', isSubscribed)
-        return (
-            <span onMouseEnter={() => {
-                clearTimeout(timeout)
-                this.setState({
-                    displaySubscribe: true,
-                    displaySubscribeId: `subscribe-${hashtag}-${index}`,
-                })
-            }} onMouseLeave={() => {
-                timeout = setTimeout(() => {
-                    this.setState({
-                        displaySubscribe: false,
-                        displaySubscribeId: '',
-                    })
-                }, 2e3)
-            }}>
-                <a className="hashtag" href="#">#{hashtag}</a>
-                <span className="spacer"></span>
-                <button onClick={() => {
-                    if(isSubscribed) this.unsubscribe(hashtag)
-                    else this.subscribe(hashtag)
-                }} ref={`subscribe-${hashtag}-${index}`} className={this.state.displaySubscribe && this.state.displaySubscribeId == `subscribe-${hashtag}-${index}` ? '' : 'hidden'} type="button">Subscribe</button>
-                <span className="spacer"></span>
-            </span>
-        )
+        await this.updateTopHashtags()
+        await this.getHashtags()
+        await this.getContent()
     }
 
     async updateTopHashtags() {
@@ -94,6 +68,25 @@ class Main extends React.Component {
         await this.getContent()
     }
 
+    async getHashtags() {
+        let topHashtagBlock
+        if(this.state.topHashtags.length == 0) {
+            topHashtagBlock = 'There are no hashtags yet, come back later!'
+        } else {
+            topHashtagBlock = this.state.topHashtags.map((hashtag, index) => (
+                <div key={index}>
+                    <Hashtag hashtag={hashtag} />
+                </div>
+            ))
+        }
+        let followedHashtagsBlock = this.state.followedHashtags.map((hashtag, index) => (
+            <div key={index}>
+                <Hashtag hashtag={hashtag} />
+            </div>
+        ))
+        this.setState({topHashtagBlock, followedHashtagsBlock})
+    }
+
     async getContent() {
         const latestContentId = await this.state.contract.methods.latestContentId().call()
         const amount = 10
@@ -101,7 +94,7 @@ class Main extends React.Component {
         let counter = amount
         // If we don't have enough content yet, show whats in there
         if(latestContentId < amount) counter = latestContentId
-        for(let i = 0; i < counter; i++) {
+        for(let i = counter - 1; i >= 0; i--) {
             let content = await this.state.contract.methods.getContentById(i).call()
             content = {
                 id: content[0],
@@ -114,7 +107,22 @@ class Main extends React.Component {
             content.hashtags = content.hashtags.map(hashtag => web3js.utils.toUtf8(hashtag))
             contents.push(content)
         }
-        this.setState({contents})
+
+        let contentsBlock = await Promise.all(contents.map(async (element, index) => (
+            <div key={index} className="content">
+                <div className="content-address">{element.author}</div>
+                <div className="content-message">{element.message}</div>
+                <div className="content-hashtags">{element.hashtags.map((hashtag, i) => (
+                    <span key={i}>
+                        <Hashtag hashtag={hashtag} />
+                    </span>
+                ))}
+                </div>
+                <div className="content-time">{element.time}</div>
+            </div>
+        )))
+
+        this.setState({contents, contentsBlock})
     }
 
     async subscribe(hashtag) {
@@ -126,41 +134,13 @@ class Main extends React.Component {
     }
 
     render() {
-        let contentBlock = this.state.contents.map((element, index) => (
-            <div key={index} className="content">
-                <div className="content-address">{element.author}</div>
-                <div className="content-message">{element.message}</div>
-                <div className="content-hashtags">{element.hashtags.map((hashtag, i) => (
-                    <span key={i}>
-                        {this.generateHashtags(hashtag, index)}
-                    </span>
-                ))}
-                </div>
-                <div className="content-time">{element.time}</div>
-            </div>
-        ))
-        let topHashtagBlock
-        if(this.state.topHashtags.length == 0) {
-            topHashtagBlock = 'There are no hashtags yet, come back later!'
-        } else {
-            topHashtagBlock = this.state.topHashtags.map((hashtag, index) => (
-                <div key={index}>
-                    {this.generateHashtags(hashtag, index)}
-                </div>
-            ))
-        }
-        let followedHashtags = this.state.followedHashtags.map((hashtag, index) => (
-            <div key={index}>
-                {this.generateHashtags(hashtag, index)}
-            </div>
-        ))
         return (
             <div className="main-container">
                 <div className="hashtag-block">
                     <h3>Top hashtags</h3>
-                    <div className="hashtag-container">{topHashtagBlock}</div>
+                    <div className="hashtag-container">{this.state.topHashtagBlock}</div>
                     <h3>Followed hashtags</h3>
-                    <div className="hashtag-container">{followedHashtags}</div>
+                    <div className="hashtag-container">{this.state.followedHashtagsBlock}</div>
                 </div>
                 <div className="content-block">
                     <div className="input-container">
@@ -172,10 +152,43 @@ class Main extends React.Component {
                     </div>
 
                     <div className="content-container">
-                        {contentBlock}
+                        {this.state.contentsBlock}
                     </div>
                 </div>
             </div>
+        )
+    }
+}
+
+class Hashtag extends React.Component {
+    constructor() {
+        super()
+        this.state = {
+            displaySubscribe: false,
+            displayUnsubscribe: false,
+        }
+    }
+    render() {
+        return (
+            <span onMouseEnter={() => {
+                this.setState({
+                    displaySubscribe: true,
+                })
+            }} onMouseLeave={() => {
+                this.setState({
+                    displaySubscribe: false,
+                })
+            }}>
+                <a className="hashtag" href="#">#{this.props.hashtag}</a>
+                <span className="spacer"></span>
+                <button onClick={() => {
+                    this.props.subscribe(this.props.hashtag)
+                }} ref="d" className={this.state.displaySubscribe ? '' : 'hidden'} type="button">Subscribe</button>
+                <button onClick={() => {
+                    this.props.unsubscribe(this.props.hashtag)
+                }} ref="d" className={this.state.displayUnsubscribe ? '' : 'hidden'} type="button">Unsubscribe</button>
+                <span className="spacer"></span>
+            </span>
         )
     }
 }
