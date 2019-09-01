@@ -78,6 +78,7 @@ button:hover {
 
 .content-hashtags {
     margin-bottom: 5px;
+    word-break: break-all;
 }
 
 .content-time {
